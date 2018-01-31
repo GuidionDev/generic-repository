@@ -10,5 +10,6 @@ interface Repository<T> {
   findLastByQuery(query: any, sortField: string, limit: number): Promise<T[]>;
   delete(query: any): Promise<T>;
   getName(): string;
+  count(): Promise<number>;
 }
 export default Repository;

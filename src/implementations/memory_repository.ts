@@ -12,6 +12,9 @@ export default class MemoryRepository<T> implements Repository<T> {
   public getName() {
     return 'naam';
   }
+  public count(): Promise<number> {
+    return Promise.resolve(Object.keys(this.docs).length);
+  }
 
   public find(conditions: Object): Promise<T[]> {
     const keys = Object.keys(this.docs);
