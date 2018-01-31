@@ -22,15 +22,14 @@ export default class MongoConnect {
         console.info(this, 'Connected! ' + db_uri);
         resolve();
       });
-  
+
       // If the connection throws an error
       mongoose.connection.on('error', (err: string) => {
         const message = 'Failed to connect to: ' + db_uri;
         console.error(this, message, err);
         reject(message);
       });
-  
-    })
+    });
     // When the connection is disconnected
     mongoose.connection.on('disconnected', () => {
       console.info(this, 'Disconnected from: ' + db_uri);

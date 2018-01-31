@@ -1,5 +1,5 @@
 import Repository from './repository';
 
-export { 
+export {
   Repository
-}
+};
