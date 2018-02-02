@@ -2,7 +2,7 @@ import * as mongoose from 'mongoose';
 
 export default class MongoConnect {
 
-  public connect(connectionString: string | undefined): mongoose.Connection {
+  public connect(connectionString = undefined): Promise<mongoose.Connection> {
     let db_uri = connectionString || process.env.DB_URI;
     console.log('Running in ', process.env.NODE_ENV, ' environment');
     if (process.env.NODE_ENV === 'test' && process.env.DB_URI_TEST) {
@@ -20,7 +20,7 @@ export default class MongoConnect {
     const ready = new Promise((resolve, reject) => {
       mongoose.connection.on('connected', () => {
         console.info(this, 'Connected! ' + db_uri);
-        resolve();
+        resolve(mongoose.connection);
       });
 
       // If the connection throws an error

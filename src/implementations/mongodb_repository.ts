@@ -9,9 +9,9 @@ export default class MongoDBRepository<T> implements Repository<T> {
   private Model: any;
   private db: mongoose.Connection;
 
-  constructor(type: { new (...args: any[]): T }) {
+  constructor(type: { new (...args: any[]): T }, db: mongoose.Connection) {
     this.Type = type;
-    this.db = mongoose.connection;
+    this.db = db;
     this.initModel();
   }
 

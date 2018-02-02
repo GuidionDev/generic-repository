@@ -6,7 +6,7 @@ const expect = Chai.expect;
 import SomeObjectMongo from './mongodb_init';
 import seedFile from './SomeObject.seed';
 import MemoryRepository from '../implementations/memory_repository';
-let memRepo = new MemoryRepository<SomeObject>(SomeObject);
+let memRepo = new MemoryRepository(SomeObject);
 
 describe('Seed', () => {
   let id: string;

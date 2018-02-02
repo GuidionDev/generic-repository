@@ -20,7 +20,7 @@ onReady = new MongoConnect().connect('MY_CONNECTION_STRING');
 Just create a new instance of the repository you need, with the appropriate Type passed in like: 
 
 ```js
-db = new MongoDBRepository<SomeObject>(SomeObject);
+db = new MongoDBRepository(SomeObject);
 ```
 
 Now you are ready to query!
