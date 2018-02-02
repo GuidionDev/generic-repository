@@ -7,7 +7,6 @@ Chai.use(chaiAsPromised);
 dotEnv.config();
 process.env.NODE_ENV = 'test';
 import MongoConnect from '../mongodb_connect';
-import MongoDBRepository from '../implementations/mongodb_repository';
 before(function (done) {
   const onReady = new MongoConnect().connect();
   onReady.then(() => done()).catch(done);

@@ -2,8 +2,8 @@ import * as mongoose from 'mongoose';
 
 export default class MongoConnect {
 
-  public connect(): mongoose.Connection {
-    let db_uri = process.env.DB_URI;
+  public connect(connectionString: string | undefined): mongoose.Connection {
+    let db_uri = connectionString || process.env.DB_URI;
     console.log('Running in ', process.env.NODE_ENV, ' environment');
     if (process.env.NODE_ENV === 'test' && process.env.DB_URI_TEST) {
       db_uri = process.env.DB_URI_TEST;
