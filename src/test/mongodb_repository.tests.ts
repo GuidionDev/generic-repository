@@ -1,6 +1,5 @@
 import * as Chai from 'chai';
 import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
-import SomeObjectMongo from './mongodb_init';
 import MongoDBRepository from '../implementations/mongodb_repository';
 const expect = Chai.expect;
 import { repo } from './mongodb_init';
@@ -19,8 +18,7 @@ describe('MongoDBRepository', () => {
     it('should insert the object and return with id in a promise', (done) => {
       readyRepo.insert(objectWithoutIdFixture).then((inserted: SomeObject) => {
         id = inserted.id;
-        console.log(inserted);
-        expect(inserted.id);
+        expect(id);
         done();
       });
     });
@@ -57,7 +55,7 @@ describe('MongoDBRepository', () => {
     beforeEach((done) => {
       objectWithoutIdFixture['_name'] = 'newName';
       objectWithoutIdFixture['_submitDate'] = new Date();
-      objectWithoutIdFixture['_id'] = 'bla';
+      objectWithoutIdFixture['_id'] = undefined;
       readyRepo.insert(objectWithoutIdFixture).then((obj: SomeObject) => {
         anotherId = obj.id;
         done();
@@ -82,6 +80,7 @@ describe('MongoDBRepository', () => {
     before((done) => {
       objectWithoutIdFixture['_name'] = 'newName';
       objectWithoutIdFixture['_submitDate'] = new Date();
+      objectWithoutIdFixture['_id'] = undefined;
       readyRepo.insert(objectWithoutIdFixture).then((obj: SomeObject) => {
         anotherId = obj.id;
         done();
@@ -106,10 +105,10 @@ describe('MongoDBRepository', () => {
       }).catch(done);
     });
     it('should not find objects based on non-existent conditions', (done) => {
-      readyRepo.find({ _id: 'imfake' }).catch((error: Error) => {
-        expect(error).to.be.instanceof(Error);
+      readyRepo.find({ _id: 'imfake' }).then((result) => {
+        expect(result.length).to.equal(0);
         done();
-      });
+      }).catch(done);
     });
   });
   describe('.findLastByQuery()', () => {
@@ -157,10 +156,10 @@ describe('MongoDBRepository', () => {
       });
     });
     it('should not delete according to faulty query', (done) => {
-      readyRepo.deleteOne({ '_id': 'idontexist' }).catch((error: Error) => {
-        expect(error).to.be.instanceof(Error);
-        readyRepo.deleteOne({ '_id': 'idontexisteither' }).catch((error: Error) => {
-          expect(error).to.be.instanceof(Error);
+      readyRepo.deleteOne({ '_id': 'idontexist' }).then((success) => {
+        expect(!success);
+        readyRepo.deleteOne({ '_id': 'idontexisteither' }).then((success) => {
+          expect(!success);
           done();
         });
       });

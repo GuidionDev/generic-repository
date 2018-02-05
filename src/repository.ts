@@ -5,6 +5,7 @@ interface Repository<T> {
   findOne(conditions: Object): Promise<T>;
   findById(id: string): Promise<T>;
   insert(data: T): Promise<T>;
+  insertMany(list: T[]): Promise<T[]>;
   update(query: any, newData: any): Promise<T>;
   findLast?(field: string, limit: number): Promise<T[]>;
   findLastByQuery(query: any, sortField: string, limit: number): Promise<T[]>;

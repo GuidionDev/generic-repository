@@ -32,6 +32,13 @@ export default class MemoryRepository<T> implements Repository<T> {
   }
 
   public findOne(conditions: any): Promise<T> {
+    if (typeof conditions === 'string') {
+      if (this.docs[conditions]) {
+        return Promise.resolve(new this.Type(this.docs[conditions]));
+      } else {
+        return Promise.reject(new Error(conditions + ' does not exist'));
+      }
+    }
     return this.find(conditions).then(res => {
       if (res.length === 0) throw res;
       return res[0];
@@ -53,6 +60,19 @@ export default class MemoryRepository<T> implements Repository<T> {
     }
     this.docs[insertData['_id']] = insertData;
     return Promise.resolve(insertData);
+  }
+
+  public insertMany(list: T[]): Promise<T[]> {
+    const iterator = 0;
+    const result = list.map(item => {
+      const insertData = new this.Type(item);
+      if (!insertData['_id']) {
+        insertData['_id'] = 'test' + iterator; // generate id just like mongo would
+      }
+      this.docs[insertData['_id']] = insertData;
+      return insertData;
+    });
+    return Promise.resolve(result);
   }
 
   public update(query: any, newData: any): Promise<T> {

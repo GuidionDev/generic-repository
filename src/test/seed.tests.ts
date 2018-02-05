@@ -3,7 +3,8 @@ import * as mongoose from 'mongoose';
 import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
 import Seed from '../implementations/seed';
 const expect = Chai.expect;
-import SomeObjectMongo from './mongodb_init';
+import { repo } from './mongodb_init';
+import MongoDBRepository from '../implementations/mongodb_repository';
 import seedFile from './SomeObject.seed';
 import MemoryRepository from '../implementations/memory_repository';
 let memRepo = new MemoryRepository(SomeObject);
@@ -13,17 +14,26 @@ describe('Seed', () => {
   let anotherId: string;
   let seed: Seed<SomeObject>;
   describe('with mongodb repository', () => {
-    before(() => {
-      seed = new Seed(SomeObjectMongo, '_name', __dirname);
+    let readyRepo: MongoDBRepository<SomeObject>;
+    before(function (done) {
+      repo.then((ready) => {
+        readyRepo = ready;
+        seed = new Seed(readyRepo, '_name', __dirname);
+        done();
+      }).catch(done);
     });
     it('should seed files', (done) => {
       seed.seed().then((result) => {
         expect(result.length).to.equal(1);
-        SomeObjectMongo.findById(seedFile.data[0]._id).then(found => {
+        console.log(seedFile.data[0]._id);
+        return readyRepo.findById(seedFile.data[0]._id).then(found => {
           expect(found.name).to.equal(seedFile.data[0]._name);
           done();
         });
       }).catch(done);
+    });
+    after(function() {
+      readyRepo.deleteMany({});
     });
   });
   describe('with memory repository', () => {
@@ -39,8 +49,5 @@ describe('Seed', () => {
         });
       }).catch(done);
     });
-  });
-  after(function() {
-    SomeObjectMongo.deleteMany({});
   });
 });
