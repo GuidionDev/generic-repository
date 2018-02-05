@@ -1,70 +1,53 @@
 import Repository from '../repository';
-import * as mongoose from 'mongoose';
-import * as mongoosePaginate from 'mongoose-paginate';
-
-(mongoose as any).Promise = global.Promise;
+import { Db, Collection, CommonOptions } from 'mongodb';
 
 export default class MongoDBRepository<T> implements Repository<T> {
-  public Type: { new (...args: any[]): T };
-  private Model: any;
-  private db: mongoose.Connection;
+  public Type: { new(...args: any[]): T; };
+  private Model: Collection<T>;
 
-  constructor(type: { new (...args: any[]): T }, db: mongoose.Connection) {
+  constructor(type: { new(...args: any[]): T; }, db: Db) {
     this.Type = type;
-    this.db = db;
-    this.initModel();
+    this.Model = db.collection(this.Type.prototype.constructor.name);
   }
 
-  public getName() {
-    return this.Model['modelName'];
+  public paginate(conditions: any, page, perPage): Promise<T[]> {
+    return this.Model
+      .find(conditions)
+      .skip((perPage * page) - perPage)
+      .limit(perPage)
+      .map(this.toInstance)
+      .toArray()
+      .catch(this.reject);
+  }
+
+  public insertMany(list: T[]): Promise<T[]> {
+    return this.Model.insertMany(list)
+      .then(items => items.ops)
+      .then(this.toInstanceArray.bind(this))
+      .catch(this.reject);
   }
 
   public count(conditions: Object = {}): Promise<number> {
-    return this.Model.count(conditions).exec();
+    return this.Model.count(conditions);
   }
 
   public find(conditions: any): Promise<T[]> {
     return this.Model
       .find(conditions)
-      .then(this.instantiateResultArray.bind(this))
-      .catch(this.handleError);
-  }
-
-  public paginate(conditions: any, options?: any): Promise<T[]> {
-    options = options ? options : {};
-    return this.Model
-      .paginate(conditions, options)
-      .then((result: any) => {
-        return result.docs;
-      })
-      .catch(this.handleError);
-  }
-
-  private instantiateResultArray(listItems: mongoose.Document[]): Promise<T[]> {
-    const instantiatedListItems = listItems.map((listItem: mongoose.Document) => {
-      return new this.Type(listItem);
-    });
-    return Promise.resolve(instantiatedListItems);
-  }
-
-  private static promiseResult(result: mongoose.Document) {
-    return Promise.resolve(result);
-  }
-
-  private promiseResultTyped(result: any) {
-    return Promise.resolve(new this.Type(result));
-  }
-
-  private handleError(error: string) {
-    return Promise.reject(new Error(error));
+      .map(this.toInstance)
+      .toArray()
+      .catch(this.reject);
   }
 
   public findOne(conditions: Object): Promise<T> {
     return this.Model
       .findOne(conditions)
-      .exec()
-      .then(this.promiseResultTyped.bind(this))
-      .catch(this.handleError);
+      .then(this.toInstance)
+      .catch(this.reject);
+  }
+
+  public findById(id: string): Promise<T> {
+    return this.findOne({ _id: id });
   }
 
   public findLast(sortField: string, limit: number): Promise<T[]> {
@@ -72,75 +55,59 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .find()
       .sort({ [sortField]: -1 })
       .limit(limit)
-      .exec()
-      .then(MongoDBRepository.promiseResult)
-      .catch(this.handleError);
+      .map(this.toInstance)
+      .toArray()
+      .catch(this.reject);
   }
 
-  public findById(id: string): Promise<T> {
-    return this.Model
-      .findById(id)
-      .exec()
-      .then(this.promiseResultTyped.bind(this))
-      .catch(this.handleError);
-  }
-
-  public findLastByQuery(query: any, secondField: string, limit: number): Promise<T[]> {
-    return this.Model
-      .find(query)
+  public findLastByQuery(query: any,
+    secondField: string, limit: number): Promise<T[]> {
+    return this.Model.find(query)
       .sort({ [secondField]: -1 })
       .limit(limit)
-      .exec()
-      .then(MongoDBRepository.promiseResult)
-      .catch(this.handleError);
+      .map(this.toInstance)
+      .toArray()
+      .catch(this.reject);
   }
 
   public insert(data: T): Promise<T> {
-    return new this.Model(data)
-      .save()
-      .then(this.promiseResultTyped.bind(this))
-      .catch(this.handleError);
-  }
-
-  public update(queryID: any, newData: any): Promise<T> {
     return this.Model
-      .findOneAndUpdate(queryID, newData, { new: true, upsert: true })
-      .exec()
-      .then(this.promiseResultTyped.bind(this))
-      .catch(this.handleError);
+      .insertOne(data)
+      .then(item => item.ops[0])
+      .catch(this.reject);
   }
 
-  public delete(query: any): Promise<T> {
+  public update(query: any, newData: any): Promise<T> {
     return this.Model
-      .remove(query)
-      .exec()
-      .then(MongoDBRepository.promiseResult)
-      .catch(this.handleError);
+      .findOneAndUpdate(query, newData, { upsert: true, returnOriginal: false })
+      .then(result => this.toInstance(result.value))
+      .catch(this.reject);
   }
 
-  private initModel(): void {
-    this.Model = mongoose.model(this.Type.prototype.constructor.name, this.generateSchema());
+  public deleteOne(query: any): Promise<boolean> {
+    return this.Model
+      .deleteOne(query)
+      .then(result => !!result.result.ok)
+      .catch(this.reject);
   }
 
-  private generateSchema(): mongoose.Schema {
-    let schema = new mongoose.Schema(
-      {},
-      {
-        toObject: {
-          transform: (doc: Object, ret: Object) => new this.Type(doc)
-        }
-      }
-    );
-    schema.plugin(mongoosePaginate);
+  public deleteMany(query: any): Promise<boolean> {
+    return this.Model
+      .deleteMany(query)
+      .then(result => !!result.result.ok)
+      .catch(this.reject);
+  }
 
-    for (let propertyName of Object.keys(new this.Type({}))) {
-      if (propertyName !== 'id') {
-        schema.add({ [propertyName]: {} });
-      }
-      if (propertyName === '_searchName') {
-        schema.index({ _searchName: 'text' });
-      }
-    }
-    return schema;
+  private toInstance = (listItem: any) => {
+    return new this.Type(listItem);
+  }
+
+  private toInstanceArray(listItems: any[]): Promise<T[]> {
+    const instantiatedListItems = listItems.map(this.toInstance);
+    return Promise.resolve(instantiatedListItems);
+  }
+
+  private reject(error: any) {
+    return Promise.reject(error);
   }
 }

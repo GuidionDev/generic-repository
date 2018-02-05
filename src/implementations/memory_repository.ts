@@ -9,9 +9,6 @@ export default class MemoryRepository<T> implements Repository<T> {
     this.docs = {};
   }
 
-  public getName() {
-    return 'naam';
-  }
   public count(): Promise<number> {
     return Promise.resolve(Object.keys(this.docs).length);
   }
@@ -35,6 +32,13 @@ export default class MemoryRepository<T> implements Repository<T> {
   }
 
   public findOne(conditions: any): Promise<T> {
+    if (typeof conditions === 'string') {
+      if (this.docs[conditions]) {
+        return Promise.resolve(new this.Type(this.docs[conditions]));
+      } else {
+        return Promise.reject(new Error(conditions + ' does not exist'));
+      }
+    }
     return this.find(conditions).then(res => {
       if (res.length === 0) throw res;
       return res[0];
@@ -56,6 +60,19 @@ export default class MemoryRepository<T> implements Repository<T> {
     }
     this.docs[insertData['_id']] = insertData;
     return Promise.resolve(insertData);
+  }
+
+  public insertMany(list: T[]): Promise<T[]> {
+    const iterator = 0;
+    const result = list.map(item => {
+      const insertData = new this.Type(item);
+      if (!insertData['_id']) {
+        insertData['_id'] = 'test' + iterator; // generate id just like mongo would
+      }
+      this.docs[insertData['_id']] = insertData;
+      return insertData;
+    });
+    return Promise.resolve(result);
   }
 
   public update(query: any, newData: any): Promise<T> {
@@ -104,7 +121,7 @@ export default class MemoryRepository<T> implements Repository<T> {
     return match;
   }
 
-  public delete(query: any): Promise<any> {
+  public deleteMany(query: any): Promise<boolean> {
     const keys = Object.keys(this.docs);
     const surveySubset = new Array<T>();
     keys.forEach(key => {
@@ -114,8 +131,19 @@ export default class MemoryRepository<T> implements Repository<T> {
       }
     });
     if (surveySubset.length > 0 || keys.length === 0) {
-      return Promise.resolve('Success');
+      return Promise.resolve(true);
     }
-    return Promise.reject('No objects found');
+    return Promise.reject(false);
+  }
+
+  public deleteOne(query: any): Promise<boolean> {
+    const keys = Object.keys(this.docs);
+    keys.forEach(key => {
+      if (this.query(this.docs[key], query)) {
+        delete this.docs[key];
+        return Promise.resolve(true);
+      }
+    });
+    return Promise.reject(false);
   }
 }
