@@ -9,9 +9,6 @@ export default class MemoryRepository<T> implements Repository<T> {
     this.docs = {};
   }
 
-  public getName() {
-    return 'naam';
-  }
   public count(): Promise<number> {
     return Promise.resolve(Object.keys(this.docs).length);
   }
@@ -104,7 +101,7 @@ export default class MemoryRepository<T> implements Repository<T> {
     return match;
   }
 
-  public delete(query: any): Promise<any> {
+  public deleteMany(query: any): Promise<boolean> {
     const keys = Object.keys(this.docs);
     const surveySubset = new Array<T>();
     keys.forEach(key => {
@@ -114,8 +111,19 @@ export default class MemoryRepository<T> implements Repository<T> {
       }
     });
     if (surveySubset.length > 0 || keys.length === 0) {
-      return Promise.resolve('Success');
+      return Promise.resolve(true);
     }
-    return Promise.reject('No objects found');
+    return Promise.reject(false);
+  }
+
+  public deleteOne(query: any): Promise<boolean> {
+    const keys = Object.keys(this.docs);
+    keys.forEach(key => {
+      if (this.query(this.docs[key], query)) {
+        delete this.docs[key];
+        return Promise.resolve(true);
+      }
+    });
+    return Promise.reject(false);
   }
 }

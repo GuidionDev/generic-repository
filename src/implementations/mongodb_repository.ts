@@ -1,69 +1,65 @@
 import Repository from '../repository';
-import * as mongoose from 'mongoose';
-import * as mongoosePaginate from 'mongoose-paginate';
-
-(mongoose as any).Promise = global.Promise;
+import { Db, Collection, CommonOptions } from 'mongodb';
 
 export default class MongoDBRepository<T> implements Repository<T> {
-  public Type: { new (...args: any[]): T };
-  private Model: any;
-  private db: mongoose.Connection;
+  public Type: { new(...args: any[]): T; };
+  private Model: Collection<T>;
 
-  constructor(type: { new (...args: any[]): T }, db: mongoose.Connection) {
+  constructor(type: { new(...args: any[]): T; }, db: Db) {
+    console.log(db);
     this.Type = type;
-    this.db = db;
-    this.initModel();
+    this.Model = db.collection(this.Type.prototype.constructor.name);
+    console.log(this.Model);
   }
 
-  public getName() {
-    return this.Model['modelName'];
+  private mapItems = (listItem: any) => {
+    return new this.Type(listItem);
   }
 
-  public count(conditions: Object = {}): Promise<number> {
-    return this.Model.count(conditions).exec();
-  }
-
-  public find(conditions: any): Promise<T[]> {
-    return this.Model
-      .find(conditions)
-      .then(this.instantiateResultArray.bind(this))
-      .catch(this.handleError);
-  }
-
-  public paginate(conditions: any, options?: any): Promise<T[]> {
-    options = options ? options : {};
-    return this.Model
-      .paginate(conditions, options)
-      .then((result: any) => {
-        return result.docs;
-      })
-      .catch(this.handleError);
-  }
-
-  private instantiateResultArray(listItems: mongoose.Document[]): Promise<T[]> {
-    const instantiatedListItems = listItems.map((listItem: mongoose.Document) => {
+  private instantiateResultArray(listItems: any[]): Promise<T[]> {
+    const instantiatedListItems = listItems.map((listItem: any) => {
       return new this.Type(listItem);
     });
     return Promise.resolve(instantiatedListItems);
   }
 
-  private static promiseResult(result: mongoose.Document) {
-    return Promise.resolve(result);
+  private handleError(error: any) {
+    return Promise.reject(error);
   }
 
-  private promiseResultTyped(result: any) {
-    return Promise.resolve(new this.Type(result));
+  public paginate(conditions: any, page, perPage): Promise<T[]> {
+    return this.Model
+      .find(conditions)
+      .skip((perPage * page) - perPage)
+      .limit(perPage)
+      .map(this.mapItems)
+      .toArray()
+      .catch(this.handleError);
   }
 
-  private handleError(error: string) {
-    return Promise.reject(new Error(error));
+  public bulkInsert(list: T[]): Promise<T[]> {
+    return this.Model.insertMany(list)
+      .then(items => items.ops)
+      .then(this.instantiateResultArray.bind(this))
+      .catch(this.handleError);
+  }
+
+  public count(conditions: Object = {}): Promise<number> {
+    return this.Model.count(conditions);
+  }
+
+  public find(conditions: any): Promise<T[]> {
+    return this.Model
+      .find(conditions)
+      .map(this.mapItems)
+      .toArray()
+      .catch(this.handleError);
   }
 
   public findOne(conditions: Object): Promise<T> {
     return this.Model
-      .findOne(conditions)
-      .exec()
-      .then(this.promiseResultTyped.bind(this))
+      .find(conditions)
+      .limit(1)
       .catch(this.handleError);
   }
 
@@ -72,75 +68,54 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .find()
       .sort({ [sortField]: -1 })
       .limit(limit)
-      .exec()
-      .then(MongoDBRepository.promiseResult)
+      .map(this.mapItems)
+      .toArray()
       .catch(this.handleError);
   }
 
   public findById(id: string): Promise<T> {
     return this.Model
-      .findById(id)
-      .exec()
-      .then(this.promiseResultTyped.bind(this))
+      .find({ _id: id })
+      .limit(1)
+      .then(item => { console.log(item); return item; })
       .catch(this.handleError);
   }
 
-  public findLastByQuery(query: any, secondField: string, limit: number): Promise<T[]> {
-    return this.Model
-      .find(query)
+  public findLastByQuery(query: any,
+    secondField: string, limit: number): Promise<T[]> {
+    return this.Model.find(query)
       .sort({ [secondField]: -1 })
       .limit(limit)
-      .exec()
-      .then(MongoDBRepository.promiseResult)
+      .map(this.mapItems)
+      .toArray()
       .catch(this.handleError);
   }
 
   public insert(data: T): Promise<T> {
-    return new this.Model(data)
-      .save()
-      .then(this.promiseResultTyped.bind(this))
-      .catch(this.handleError);
-  }
-
-  public update(queryID: any, newData: any): Promise<T> {
     return this.Model
-      .findOneAndUpdate(queryID, newData, { new: true, upsert: true })
-      .exec()
-      .then(this.promiseResultTyped.bind(this))
+      .insertOne(data)
+      .then(item => item.ops)
       .catch(this.handleError);
   }
 
-  public delete(query: any): Promise<T> {
+  public update(query: any, newData: any): Promise<T> {
     return this.Model
-      .remove(query)
-      .exec()
-      .then(MongoDBRepository.promiseResult)
+      .findOneAndUpdate(query, newData, { upsert: true, returnOriginal: false })
+      .then(items => items.value)
       .catch(this.handleError);
   }
 
-  private initModel(): void {
-    this.Model = mongoose.model(this.Type.prototype.constructor.name, this.generateSchema());
+  public deleteOne(query: any): Promise<boolean> {
+    return this.Model
+      .deleteOne(query)
+      .then(result => !!result.result.ok)
+      .catch(this.handleError);
   }
 
-  private generateSchema(): mongoose.Schema {
-    let schema = new mongoose.Schema(
-      {},
-      {
-        toObject: {
-          transform: (doc: Object, ret: Object) => new this.Type(doc)
-        }
-      }
-    );
-    schema.plugin(mongoosePaginate);
-
-    for (let propertyName of Object.keys(new this.Type({}))) {
-      if (propertyName !== 'id') {
-        schema.add({ [propertyName]: {} });
-      }
-      if (propertyName === '_searchName') {
-        schema.index({ _searchName: 'text' });
-      }
-    }
-    return schema;
+  public deleteMany(query: any): Promise<boolean> {
+    return this.Model
+      .deleteMany(query)
+      .then(result => !!result.result.ok)
+      .catch(this.handleError);
   }
 }

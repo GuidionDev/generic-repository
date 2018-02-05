@@ -41,6 +41,6 @@ describe('Seed', () => {
     });
   });
   after(function() {
-    SomeObjectMongo.delete({});
+    SomeObjectMongo.deleteMany({});
   });
 });
