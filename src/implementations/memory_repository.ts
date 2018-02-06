@@ -27,7 +27,7 @@ export default class MemoryRepository<T> implements Repository<T> {
     return Promise.reject('Not found');
   }
 
-  public paginate(conditions: Object, options?: any): Promise<T[]> {
+  public paginate(conditions: Object, sortOptions: any, page, perPage): Promise<T[]> {
     return this.find(conditions);
   }
 

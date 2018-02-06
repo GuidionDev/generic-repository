@@ -92,13 +92,13 @@ describe('MongoDBRepository', () => {
       }).catch(done);
     });
     it('should find all objects with paging', (done) => {
-      readyRepo.paginate({ _id: anotherId }, 1, 10).then((result) => {
+      readyRepo.paginate({ _id: anotherId }, ['_id', 'asc'], 1, 10).then((result) => {
         expect(result.length).to.equal(1);
         done();
       }).catch(done);
     });
     it('should find no objects with invalid paging', (done) => {
-      readyRepo.paginate({}, 2, 10).then((result) => {
+      readyRepo.paginate({}, ['_id', 'asc'], 2, 10).then((result) => {
         expect(result.length).to.equal(0);
         done();
       }).catch(done);

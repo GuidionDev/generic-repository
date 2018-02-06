@@ -12,9 +12,10 @@ export default class MongoDBRepository<T> implements Repository<T> {
     }).catch(err => console.error('generic repository for:', this.Type.prototype.constructor.name, 'An error occured while making connection to the database.'));
   }
 
-  public paginate(conditions: any, page, perPage): Promise<T[]> {
+  public paginate(conditions: any, sortOptions: any, page, perPage): Promise<T[]> {
     return this.Model
       .find(conditions)
+      .sort(sortOptions)
       .skip((perPage * page) - perPage)
       .limit(perPage)
       .map(this.toInstance)
@@ -63,9 +64,9 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public findLastByQuery(query: any,
-    secondField: string, limit: number): Promise<T[]> {
+    sortField: string, limit: number): Promise<T[]> {
     return this.Model.find(query)
-      .sort({ [secondField]: -1 })
+      .sort({ [sortField]: -1 })
       .limit(limit)
       .map(this.toInstance)
       .toArray()

@@ -7,6 +7,7 @@ import { repo, connection } from './mongodb_init';
 import MongoDBRepository from '../implementations/mongodb_repository';
 import seedFile from './SomeObject.seed';
 import MemoryRepository from '../implementations/memory_repository';
+import SeedFile from './SomeObject.seed';
 let memRepo = new MemoryRepository(SomeObject);
 
 describe('Seed', () => {
@@ -17,14 +18,13 @@ describe('Seed', () => {
     let readyRepo = repo;
     before(function (done) {
       connection.then((ready) => {
-        seed = new Seed(readyRepo, '_name', __dirname);
+        seed = new Seed(readyRepo, '_name', SeedFile);
         done();
       }).catch(done);
     });
     it('should seed files', (done) => {
       seed.seed().then((result) => {
         expect(result.length).to.equal(1);
-        console.log(seedFile.data[0]._id);
         return readyRepo.findById(seedFile.data[0]._id).then(found => {
           expect(found.name).to.equal(seedFile.data[0]._name);
           done();
@@ -37,7 +37,7 @@ describe('Seed', () => {
   });
   describe('with memory repository', () => {
     before(() => {
-      seed = new Seed(memRepo, '_name', __dirname);
+      seed = new Seed(memRepo, '_name', SeedFile);
     });
     it('should seed files', (done) => {
       seed.seed().then((result) => {
