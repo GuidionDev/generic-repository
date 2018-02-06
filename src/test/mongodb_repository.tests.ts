@@ -2,15 +2,14 @@ import * as Chai from 'chai';
 import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
 import MongoDBRepository from '../implementations/mongodb_repository';
 const expect = Chai.expect;
-import { repo } from './mongodb_init';
+import { repo, connection } from './mongodb_init';
 
 describe('MongoDBRepository', () => {
   let id: string;
   let anotherId: string;
-  let readyRepo: MongoDBRepository<SomeObject>;
+  let readyRepo = repo;
   before(function (done) {
-    repo.then((ready) => {
-      readyRepo = ready;
+    connection.then((ready) => {
       done();
     }).catch(done);
   });

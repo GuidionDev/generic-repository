@@ -3,7 +3,7 @@ import * as mongoose from 'mongoose';
 import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
 import Seed from '../implementations/seed';
 const expect = Chai.expect;
-import { repo } from './mongodb_init';
+import { repo, connection } from './mongodb_init';
 import MongoDBRepository from '../implementations/mongodb_repository';
 import seedFile from './SomeObject.seed';
 import MemoryRepository from '../implementations/memory_repository';
@@ -14,10 +14,9 @@ describe('Seed', () => {
   let anotherId: string;
   let seed: Seed<SomeObject>;
   describe('with mongodb repository', () => {
-    let readyRepo: MongoDBRepository<SomeObject>;
+    let readyRepo = repo;
     before(function (done) {
-      repo.then((ready) => {
-        readyRepo = ready;
+      connection.then((ready) => {
         seed = new Seed(readyRepo, '_name', __dirname);
         done();
       }).catch(done);

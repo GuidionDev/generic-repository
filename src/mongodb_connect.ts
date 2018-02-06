@@ -1,8 +1,18 @@
 import { MongoClient, Db } from 'mongodb';
 
-export default class MongoConnect {
+// Singleton, in order to make sure repositories share a connection/db
+export class MongoConnect {
+  private _readyConnection: MongoClient;
   private _connection: Promise<MongoClient>;
   private _db: Db;
+  private static _instance: MongoConnect;
+
+  private constructor() { }
+
+  public static get Instance() {
+      return this._instance || (this._instance = new this());
+  }
+
   public async connect(connectionString = undefined, name = undefined): Promise<Db> {
     let dbUri = connectionString || process.env.DB_URI;
     let dbName = name || process.env.DB_NAME;
@@ -12,9 +22,9 @@ export default class MongoConnect {
       dbName = process.env.DB_NAME_TEST;
     }
     console.info(this, 'Connecting to: ' + dbUri);
-    this._connection = MongoClient.connect(dbUri);
-    return this._connection.then(ready => {
+    return this._connection = MongoClient.connect(dbUri).then(ready => {
       console.log('connected to: ', dbUri);
+      this._readyConnection = ready;
       return this._db = ready.db(dbName);
     }).catch(error => console.log('failed to connect to', dbUri));
   }
@@ -24,4 +34,16 @@ export default class MongoConnect {
   get db() {
     return this._db;
   }
+
+  private closeConnectionAndProcess() {
+    this.gracefulExit();
+    process.exit();
+  }
+
+  public gracefulExit() {
+    this._readyConnection && this._readyConnection.close();
+  }
 }
+
+export const MongoConnection = MongoConnect.Instance;
+export default MongoConnection;
