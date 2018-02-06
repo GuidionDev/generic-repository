@@ -7,7 +7,7 @@ interface Repository<T> {
   insert(data: T): Promise<T>;
   insertMany(list: T[]): Promise<T[]>;
   update(query: any, newData: any): Promise<T>;
-  findLast?(field: string, limit: number): Promise<T[]>;
+  findLast(field: string, limit: number): Promise<T[]>;
   findLastByQuery(query: any, sortField: string, limit: number): Promise<T[]>;
   deleteOne(query: any): Promise<boolean>;
   deleteMany(query: any): Promise<boolean>;

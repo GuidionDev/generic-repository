@@ -1,10 +1,10 @@
 import Repository from '../repository';
 
 export default class MemoryRepository<T> implements Repository<T> {
-  public Type: { new (...args: any[]): T };
+  public Type: { new(...args: any[]): T };
   private docs: { [key: string]: T };
 
-  constructor(type: { new (...args: any[]): T }) {
+  constructor(type: { new(...args: any[]): T }) {
     this.Type = type;
     this.docs = {};
   }
@@ -14,6 +14,14 @@ export default class MemoryRepository<T> implements Repository<T> {
   }
 
   public find(conditions: Object): Promise<T[]> {
+    return Promise.resolve(this.findNow(conditions));
+  }
+
+  public paginate(conditions: Object, sortOptions: any, page, perPage): Promise<T[]> {
+    return Promise.resolve(this.findNow(conditions).slice(page * perPage - perPage, page * perPage));
+  }
+
+  private findNow(conditions) {
     const keys = Object.keys(this.docs);
     const surveySubset = new Array<T>();
     keys.forEach(key => {
@@ -21,14 +29,7 @@ export default class MemoryRepository<T> implements Repository<T> {
         surveySubset.push(this.docs[key]);
       }
     });
-    if (surveySubset.length > 0 || keys.length === 0) {
-      return Promise.resolve(surveySubset);
-    }
-    return Promise.reject('Not found');
-  }
-
-  public paginate(conditions: Object, sortOptions: any, page, perPage): Promise<T[]> {
-    return this.find(conditions);
+    return surveySubset;
   }
 
   public findOne(conditions: any): Promise<T> {
@@ -40,7 +41,7 @@ export default class MemoryRepository<T> implements Repository<T> {
       }
     }
     return this.find(conditions).then(res => {
-      if (res.length === 0) throw res;
+      if (res.length === 0) throw new Error('Not found');
       return res[0];
     });
   }
@@ -95,6 +96,11 @@ export default class MemoryRepository<T> implements Repository<T> {
     return target;
   }
 
+  public findLast(sortField: string, limit: number): Promise<T[]> {
+    const sorted =  Object.values(this.docs).sort((a, b) => a[sortField] >= b[sortField] ? 1 : -1);
+    return Promise.resolve(sorted.slice(0, limit));
+  }
+
   public findLastByQuery(query: any, sortField: string, limit: number): Promise<T[]> {
     return this.find(query);
   }
@@ -138,12 +144,12 @@ export default class MemoryRepository<T> implements Repository<T> {
 
   public deleteOne(query: any): Promise<boolean> {
     const keys = Object.keys(this.docs);
-    keys.forEach(key => {
+    return Promise.resolve(keys.some(key => {
       if (this.query(this.docs[key], query)) {
         delete this.docs[key];
-        return Promise.resolve(true);
+        return true;
       }
-    });
-    return Promise.reject(false);
+      return false;
+    }));
   }
 }
