@@ -6,10 +6,5 @@ import { repo, connection } from './mongodb_init';
 import { tests } from './repository.tests';
 
 describe('MongoDBRepository', () => {
-  before(function (done) {
-    connection.then((ready) => {
-      done();
-    }).catch(done);
-  });
   tests(repo);
 });
