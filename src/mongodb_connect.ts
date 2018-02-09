@@ -13,26 +13,20 @@ export class MongoConnect {
       return this._instance || (this._instance = new this());
   }
 
-  public async connect(connectionString = undefined, database = undefined, user = undefined, pass = undefined): Promise<Db> {
+  public async connect(connectionString = undefined, database = undefined): Promise<Db> {
     let dbUri = connectionString || process.env.DB_URI;
     let dbName = database || process.env.DB_NAME;
-    const dbUser = user || process.env.DB_USER;
-    const dbPass = pass || process.env.DB_PASS;
     if (process.env.NODE_ENV === 'test' && process.env.DB_URI_TEST) {
       console.log('Running in ', process.env.NODE_ENV, ' environment');
       dbUri = process.env.DB_URI_TEST;
       dbName = process.env.DB_NAME_TEST;
     }
-    console.info(this, 'Connecting to: ' + dbUri);
-    return this._connection = MongoClient.connect(dbUri).then(async (ready) => {
-      if (dbUser && dbPass) {
-        console.log('authenticating..');
-        await ready.authenticate(process.env.DB_USER, process.env.DB_PASS);
-      }
-      console.log('connected to: ', dbUri);
+    console.info(this, 'Connecting to database..');
+    return this._connection = MongoClient.connect(dbUri).then((ready) => {
+      console.log('Connected!');
       this._readyConnection = ready;
       return this._db = ready.db(dbName);
-    }).catch(error => console.log('failed to connect to', dbUri));
+    }).catch(error => console.log('Failed to connect to', dbUri, error));
   }
   get connection() {
     return this._connection;
