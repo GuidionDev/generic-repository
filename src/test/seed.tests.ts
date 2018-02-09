@@ -1,5 +1,4 @@
 import * as Chai from 'chai';
-import * as mongoose from 'mongoose';
 import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
 import Seed from '../implementations/seed';
 const expect = Chai.expect;
