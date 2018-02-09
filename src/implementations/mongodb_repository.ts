@@ -3,50 +3,54 @@ import { Db, Collection, CommonOptions } from 'mongodb';
 
 export default class MongoDBRepository<T> implements Repository<T> {
   public Type: { new(...args: any[]): T; };
-  private Model: Collection<T>;
+  private Model: Promise<Collection<T>>;
 
   constructor(type: { new(...args: any[]): T; }, db: Promise<Db>) {
     this.Type = type;
-    db.then(ready => {
-      this.Model = ready.collection(this.Type.prototype.constructor.name);
-    }).catch(err => console.error(this.Type.prototype.constructor.name, 'An error occured while making connection to the database.'));
+    this.Model = db.then(ready => ready.collection(this.Type.prototype.constructor.name))
+    .catch(err => {
+      console.error(this.Type.prototype.constructor.name, 'An error occured while making connection to the database.');
+      return err;
+    });
   }
 
   public paginate(conditions: any, sortOptions: any, page, perPage): Promise<T[]> {
-    return this.Model
+    return this.Model.then(model => model
       .find(conditions)
       .sort(sortOptions)
       .skip((perPage * page) - perPage)
       .limit(perPage)
       .map(this.toInstance)
       .toArray()
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public insertMany(list: T[]): Promise<T[]> {
-    return this.Model.insertMany(list)
+    return this.Model.then(model => model
+      .insertMany(list)
       .then(items => items.ops)
       .then(this.toInstanceArray.bind(this))
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public count(conditions: Object = {}): Promise<number> {
-    return this.Model.count(conditions);
+    return this.Model.then(model => model
+      .count(conditions));
   }
 
   public find(conditions: any): Promise<T[]> {
-    return this.Model
+    return this.Model.then(model => model
       .find(conditions)
       .map(this.toInstance)
       .toArray()
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public findOne(conditions: Object): Promise<T> {
-    return this.Model
+    return this.Model.then(model => model
       .findOne(conditions)
       .then(this.toInstance)
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public findById(id: string): Promise<T> {
@@ -54,51 +58,52 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public findLast(sortField: string, limit: number): Promise<T[]> {
-    return this.Model
+    return this.Model.then(model => model
       .find()
       .sort({ [sortField]: -1 })
       .limit(limit)
       .map(this.toInstance)
       .toArray()
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public findLastByQuery(query: any,
     sortField: string, limit: number): Promise<T[]> {
-    return this.Model.find(query)
+      return this.Model.then(model => model
+      .find(query)
       .sort({ [sortField]: -1 })
       .limit(limit)
       .map(this.toInstance)
       .toArray()
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public insert(data: T): Promise<T> {
-    return this.Model
+    return this.Model.then(model => model
       .insertOne(data)
       .then(item => item.ops[0])
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public update(query: any, newData: any): Promise<T> {
-    return this.Model
+    return this.Model.then(model => model
       .findOneAndUpdate(query, newData, { upsert: true, returnOriginal: false })
       .then(result => this.toInstance(result.value))
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public deleteOne(query: any): Promise<boolean> {
-    return this.Model
+    return this.Model.then(model => model
       .deleteOne(query)
       .then(result => !!result.result.ok)
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   public deleteMany(query: any): Promise<boolean> {
-    return this.Model
+    return this.Model.then(model => model
       .deleteMany(query)
       .then(result => !!result.result.ok)
-      .catch(this.reject);
+      .catch(this.reject));
   }
 
   private toInstance = (listItem: any) => {
