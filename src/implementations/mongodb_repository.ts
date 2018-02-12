@@ -7,11 +7,19 @@ export default class MongoDBRepository<T> implements Repository<T> {
 
   constructor(type: { new(...args: any[]): T; }, db: Promise<Db>) {
     this.Type = type;
-    this.Model = db.then(ready => ready.collection(this.Type.prototype.constructor.name))
+    this.Model = db.then(ready => ready.collection(this.toCollectionName()))
     .catch(err => {
       console.error(this.Type.prototype.constructor.name, 'An error occured while making connection to the database.');
       return err;
     });
+  }
+
+  private toCollectionName() {
+    let name = this.Type.prototype.constructor.name;
+    if (name.charAt(name.length - 1) !== 's') {
+      name = name + 's';
+    }
+    return name.toLowerCase();
   }
 
   public paginate(conditions: any, sortOptions: any, page, perPage): Promise<T[]> {

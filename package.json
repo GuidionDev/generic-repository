@@ -39,13 +39,13 @@
     "gulp-tslint": "^8.0.0",
     "gulp-typedoc": "^2.0.2",
     "gulp-typescript": "^3.1.6",
-    "mocha": "^3.5.3",
+    "mocha": "^3.1.2",
     "remap-istanbul": "^0.9.5",
     "run-sequence": "^1.2.2",
     "semantic-release": "^4.3.5",
     "supertest": "^3.0.0",
     "tslint": "^5.2.0",
-    "typescript": "^2.0.6",
+    "typescript": "^2.7.1",
     "typings": "^2.1.1"
   }
 }
