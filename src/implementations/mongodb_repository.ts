@@ -1,5 +1,5 @@
 import Repository from '../repository';
-import { Db, Collection, CommonOptions } from 'mongodb';
+import { Db, Collection, CommonOptions, ObjectId } from 'mongodb';
 
 export default class MongoDBRepository<T> implements Repository<T> {
   public Type: { new(...args: any[]): T; };
@@ -10,7 +10,6 @@ export default class MongoDBRepository<T> implements Repository<T> {
     this.Model = db.then(ready => ready.collection(this.Type.prototype.constructor.name))
     .catch(err => {
       console.error(this.Type.prototype.constructor.name, 'An error occured while making connection to the database.');
-      return err;
     });
   }
 
@@ -27,7 +26,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
 
   public insertMany(list: T[]): Promise<T[]> {
     return this.Model.then(model => model
-      .insertMany(list)
+      .insertMany(list.map(this.idToObjectId))
       .then(items => items.ops)
       .then(this.toInstanceArray.bind(this))
       .catch(this.reject));
@@ -59,7 +58,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public findById(id: string): Promise<T> {
-    return this.findOne({ _id: id });
+    return this.findOne({ _id: ObjectId(id) });
   }
 
   public findLast(sortField: string, limit: number): Promise<T[]> {
@@ -84,7 +83,8 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public insert(data: T): Promise<T> {
-    return this.Model.then(model => model
+    this.idToObjectId(data);
+    return this.Model.then((model) => model
       .insertOne(data)
       .then(item => item.ops[0])
       .catch(this.reject));
@@ -109,6 +109,12 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .deleteMany(query)
       .then(result => !!result.result.ok)
       .catch(this.reject));
+  }
+
+  private idToObjectId(data: T) {
+    if (data['_id'] && typeof data['_id'] === 'string') {
+      data['_id'] = ObjectId(data['_id']);
+    }
   }
 
   private toInstance = (listItem: T) => {

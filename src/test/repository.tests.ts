@@ -6,6 +6,9 @@ const expect = Chai.expect;
 export function tests(readyRepo: Repository<SomeObject>) {
   let id: string;
   let anotherId: string;
+  before((done) => {
+    readyRepo.deleteMany({}).then(() => done());
+  });
   describe('.insert()', () => {
     it('should insert the object and return with id in a promise', (done) => {
       readyRepo.insert(objectWithoutIdFixture).then((inserted: SomeObject) => {
@@ -17,20 +20,20 @@ export function tests(readyRepo: Repository<SomeObject>) {
   });
   describe('.findById()', () => {
     it('should find one object based on the id', (done) => {
-      readyRepo.findById(id).then((result) => {
+      readyRepo.findById(id.toString()).then((result) => {
         expect(result.id.toString()).to.equal(id.toString());
         done();
       }).catch(done);
     });
     it('should not find one object based on wrong id', (done) => {
-      readyRepo.findById('idontexist').then(done).catch((error: Error) => {
+      readyRepo.findById('598b189fb4593800112122af').then(done).catch((error: Error) => {
         expect(error).to.be.instanceof(Error);
         done();
       });
     });
   });
   describe('.findOne()', () => {
-    it('should find one object based on the conditions', (done) => {
+    it('should find one object based on no conditions', (done) => {
       readyRepo.findOne({}).then((result) => {
         expect(result.id.toString()).to.equal(id.toString());
         done();
