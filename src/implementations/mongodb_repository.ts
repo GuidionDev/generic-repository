@@ -61,7 +61,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
         if (doc) {
           return this.toInstance(doc);
         } else {
-          throw new Error('No results for query: ' + conditions);
+          throw new Error('No results for query: ' + JSON.stringify(conditions));
         }
       }).catch(this.reject));
   }

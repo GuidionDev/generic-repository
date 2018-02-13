@@ -23,7 +23,7 @@ export function tests(readyRepo: Repository<SomeObject>) {
       }).catch(done);
     });
     it('should not find one object based on wrong id', (done) => {
-      readyRepo.findById('idontexist').catch((error: Error) => {
+      readyRepo.findById('idontexist').then(done).catch((error: Error) => {
         expect(error).to.be.instanceof(Error);
         done();
       });
