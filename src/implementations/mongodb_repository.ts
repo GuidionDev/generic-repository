@@ -57,8 +57,13 @@ export default class MongoDBRepository<T> implements Repository<T> {
   public findOne(conditions: Object): Promise<T> {
     return this.Model.then(model => model
       .findOne(conditions)
-      .then(this.toInstance)
-      .catch(this.reject));
+      .then(doc => {
+        if (doc) {
+          return this.toInstance(doc);
+        } else {
+          throw new Error('No results for query: ' + conditions);
+        }
+      }).catch(this.reject));
   }
 
   public findById(id: string): Promise<T> {
@@ -114,11 +119,11 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .catch(this.reject));
   }
 
-  private toInstance = (listItem: any) => {
+  private toInstance = (listItem: T) => {
     return new this.Type(listItem);
   }
 
-  private toInstanceArray(listItems: any[]): Promise<T[]> {
+  private toInstanceArray(listItems: T[]): Promise<T[]> {
     const instantiatedListItems = listItems.map(this.toInstance);
     return Promise.resolve(instantiatedListItems);
   }
