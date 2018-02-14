@@ -91,8 +91,20 @@ export function tests(readyRepo: Repository<SomeObject>) {
         done();
       });
     });
-    it('should find all objects based on the conditions', (done) => {
+    it('should find all objects', (done) => {
+      readyRepo.find({}).then((result) => {
+        expect(result.length).to.equal(1);
+        done();
+      }).catch(done);
+    });
+    it('should find specific object based on the conditions', (done) => {
       readyRepo.find({ _id: anotherId }).then((result) => {
+        expect(result.length).to.equal(1);
+        done();
+      }).catch(done);
+    });
+    it('should find specific object based on the conditions with a string id', (done) => {
+      readyRepo.find({ _id: anotherId.toString() }).then((result) => {
         expect(result.length).to.equal(1);
         done();
       }).catch(done);
@@ -141,33 +153,43 @@ export function tests(readyRepo: Repository<SomeObject>) {
     });
   });
   describe('.update()', () => {
-    it('should update according to query', (done) => {
+    let objId;
+    before((done) => {
       readyRepo.insert(new SomeObject(objectWithoutIdFixture)).then((obj: SomeObject) => {
-        readyRepo.update({ _id: obj.id }, { $set: { _name: 'bla' } }).then((updated: SomeObject) => {
-          expect(updated.name).to.equal('bla');
-          done();
-        });
+        objId = obj.id;
+        done();
+      });
+    });
+    it('should update according to query', (done) => {
+      readyRepo.update({ _id: objId }, { $set: { _name: 'bla' } }).then((updated: SomeObject) => {
+        expect(updated.name).to.equal('bla');
+        done();
       }).catch(done);
+    });
+    it('should update according to query with string id', (done) => {
+      readyRepo.update({ _id: objId.toString() }, { $set: { _name: 'bla2' } }).then((updated: SomeObject) => {
+          expect(updated.name).to.equal('bla2');
+          done();
+        }).catch(done);
     });
   });
   describe('.delete()', () => {
     it('should delete according to query', (done) => {
-      readyRepo.deleteOne({ '_id': id }).then((result) => {
-        expect(result);
-        readyRepo.deleteOne({ '_id': anotherId }).then((another) => {
-          expect(another);
-          done();
-        });
-      });
+      console.log(JSON.stringify(anotherId));
+      readyRepo.deleteOne({ '_id': anotherId.toString() }).then((another) => {
+        expect(another).to.be.true;
+        console.log(JSON.stringify(anotherId));
+        return readyRepo.find({ '_id': anotherId }).then(res => expect(res.length).to.equal(0) && done());
+      }).catch(done);
     });
     it('should not delete according to faulty query', (done) => {
       readyRepo.deleteOne({ '_id': 'idontexist' }).then((success) => {
         expect(!success);
-        readyRepo.deleteOne({ '_id': 'idontexisteither' }).then((success) => {
+        return readyRepo.deleteOne({ '_id': 'idontexisteither' }).then((success) => {
           expect(!success);
           done();
         });
-      });
+      }).catch(done);
     });
     it('should delete everything', (done) => {
       readyRepo.deleteMany({}).then(() => {

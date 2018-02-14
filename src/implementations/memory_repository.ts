@@ -56,7 +56,7 @@ export default class MemoryRepository<T> implements Repository<T> {
 
   public insert(data: any): Promise<T> {
     const insertData = new this.Type(data);
-    if (!insertData['_id']) {
+    if (!insertData['_id'] && !this.docs[insertData['_id']]) {
       insertData['_id'] = 'test123'; // generate id just like mongo would
     }
     this.docs[insertData['_id']] = insertData;

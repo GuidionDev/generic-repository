@@ -14,6 +14,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public paginate(conditions: any, sortOptions: any, page, perPage): Promise<T[]> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
       .find(conditions)
       .sort(sortOptions)
@@ -37,11 +38,13 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public count(conditions: Object = {}): Promise<number> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
       .count(conditions));
   }
 
   public find(conditions: any): Promise<T[]> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
       .find(conditions)
       .map(this.toInstance)
@@ -50,6 +53,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public findOne(conditions: Object): Promise<T> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
       .findOne(conditions)
       .then(doc => {
@@ -75,10 +79,11 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .catch(this.reject));
   }
 
-  public findLastByQuery(query: any,
+  public findLastByQuery(conditions: any,
     sortField: string, limit: number): Promise<T[]> {
+      this.CastQueryIdToObjectId(conditions);
       return this.Model.then(model => model
-      .find(query)
+      .find(conditions)
       .sort({ [sortField]: -1 })
       .limit(limit)
       .map(this.toInstance)
@@ -94,25 +99,34 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .catch(this.reject));
   }
 
-  public update(query: any, newData: any): Promise<T> {
+  public update(conditions: any, newData: any): Promise<T> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
-      .findOneAndUpdate(query, newData, { upsert: true, returnOriginal: false })
+      .findOneAndUpdate(conditions, newData, { upsert: true, returnOriginal: false })
       .then(result => this.toInstance(result.value))
       .catch(this.reject));
   }
 
-  public deleteOne(query: any): Promise<boolean> {
+  public deleteOne(conditions: any): Promise<boolean> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
-      .deleteOne(query)
+      .deleteOne(conditions)
       .then(result => !!result.result.ok)
       .catch(this.reject));
   }
 
-  public deleteMany(query: any): Promise<boolean> {
+  public deleteMany(conditions: any): Promise<boolean> {
+    this.CastQueryIdToObjectId(conditions);
     return this.Model.then(model => model
-      .deleteMany(query)
+      .deleteMany(conditions)
       .then(result => !!result.result.ok)
       .catch(this.reject));
+  }
+
+  private CastQueryIdToObjectId(query) {
+    if (query['_id']) {
+      query['_id'] = this.idToObjectId(query['_id']);
+    }
   }
 
   private idToObjectId(id: string) {

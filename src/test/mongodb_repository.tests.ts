@@ -15,7 +15,7 @@ describe('MongoDBRepository<AnotherObject>', () => {
 
   describe('.findOne()', () => {
     it('should find one object based on object specific conditions', (done) => {
-      anotherRepo.insert(anotherObjectWithoutIdFixture);
+      anotherRepo.insert(new AnotherObject(anotherObjectWithoutIdFixture));
       anotherRepo.findOne({ _domain: 'test@guidion.net'}).then((result) => {
         expect(result.domain).to.equal(anotherObjectWithoutIdFixture.domain);
         done();
