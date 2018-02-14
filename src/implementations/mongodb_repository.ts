@@ -25,8 +25,12 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public insertMany(list: T[]): Promise<T[]> {
+    const withMappedIds = list.map((data) => {
+      data['_id'] = this.idToObjectId(data['_id']);
+      return data;
+    });
     return this.Model.then(model => model
-      .insertMany(list.map(this.idToObjectId))
+      .insertMany(withMappedIds)
       .then(items => items.ops)
       .then(this.toInstanceArray.bind(this))
       .catch(this.reject));
@@ -58,7 +62,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public findById(id: string): Promise<T> {
-    return this.findOne({ _id: ObjectId(id) });
+    return this.findOne({ _id: this.idToObjectId(id) });
   }
 
   public findLast(sortField: string, limit: number): Promise<T[]> {
@@ -83,7 +87,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
   }
 
   public insert(data: T): Promise<T> {
-    this.idToObjectId(data);
+    data['_id'] = this.idToObjectId(data['_id']);
     return this.Model.then((model) => model
       .insertOne(data)
       .then(item => item.ops[0])
@@ -111,9 +115,9 @@ export default class MongoDBRepository<T> implements Repository<T> {
       .catch(this.reject));
   }
 
-  private idToObjectId(data: T) {
-    if (data['_id'] && typeof data['_id'] === 'string') {
-      data['_id'] = ObjectId(data['_id']);
+  private idToObjectId(id: string) {
+    if (id && ObjectId.isValid(id)) {
+      return ObjectId(id);
     }
   }
 
