@@ -119,6 +119,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
     if (id && ObjectId.isValid(id)) {
       return ObjectId(id);
     }
+    return id;
   }
 
   private toInstance = (listItem: T) => {

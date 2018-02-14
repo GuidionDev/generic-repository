@@ -15,7 +15,7 @@ export function tests(readyRepo: Repository<SomeObject>) {
         id = inserted.id;
         expect(id);
         done();
-      });
+      }).catch(done);
     });
   });
   describe('.findById()', () => {
@@ -23,6 +23,16 @@ export function tests(readyRepo: Repository<SomeObject>) {
       readyRepo.findById(id.toString()).then((result) => {
         expect(result.id.toString()).to.equal(id.toString());
         done();
+      }).catch(done);
+    });
+    it('should find one object based on a new id', (done) => {
+      const insertWithId: any = { name: objectWithoutIdFixture.name, _id: '12345'};
+      readyRepo.insert(insertWithId).then((result) => {
+        return readyRepo.findById(insertWithId._id).then((result) => {
+          expect(result.id.toString()).to.equal('12345');
+          readyRepo.deleteOne({ _id: insertWithId._id });
+          done();
+        });
       }).catch(done);
     });
     it('should not find one object based on wrong id', (done) => {
