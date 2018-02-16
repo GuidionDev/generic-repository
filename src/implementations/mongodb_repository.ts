@@ -101,6 +101,9 @@ export default class MongoDBRepository<T> implements Repository<T> {
 
   public update(conditions: any, newData: any): Promise<T> {
     this.CastQueryIdToObjectId(conditions);
+    if (newData['_id']) {
+      newData['_id'] = this.idToObjectId(newData['_id']);
+    }
     return this.Model.then(model => model
       .findOneAndUpdate(conditions, newData, { upsert: true, returnOriginal: false })
       .then(result => this.toInstance(result.value))

@@ -13,7 +13,7 @@ export function tests(readyRepo: Repository<SomeObject>) {
     it('should insert the object and return with id in a promise', (done) => {
       readyRepo.insert(objectWithoutIdFixture).then((inserted: SomeObject) => {
         id = inserted.id;
-        expect(id);
+        expect(id).to.not.be.empty;
         done();
       }).catch(done);
     });
@@ -159,6 +159,12 @@ export function tests(readyRepo: Repository<SomeObject>) {
         objId = obj.id;
         done();
       });
+    });
+    it('should update entirte object', (done) => {
+      readyRepo.update({ _id: objId }, {_id: objId.toString(), _name: 'newName'}).then((updated: SomeObject) => {
+        expect(updated.name).to.equal('newName');
+        done();
+      }).catch(done);
     });
     it('should update according to query', (done) => {
       readyRepo.update({ _id: objId }, { $set: { _name: 'bla' } }).then((updated: SomeObject) => {
