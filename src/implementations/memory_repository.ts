@@ -1,4 +1,5 @@
 import Repository from '../repository';
+import { NotFoundError } from '../errors/not_found_error';
 
 export default class MemoryRepository<T> implements Repository<T> {
   public Type: { new(...args: any[]): T };
@@ -41,7 +42,7 @@ export default class MemoryRepository<T> implements Repository<T> {
       }
     }
     return this.find(conditions).then(res => {
-      if (res.length === 0) throw new Error('Not found');
+      if (res.length === 0) throw new NotFoundError('Not found');
       return res[0];
     });
   }
@@ -50,7 +51,7 @@ export default class MemoryRepository<T> implements Repository<T> {
     if (this.docs[id]) {
       return Promise.resolve(new this.Type(this.docs[id]));
     } else {
-      return Promise.reject(new Error(id + ' does not exist'));
+      return Promise.reject(new NotFoundError(id + ' does not exist'));
     }
   }
 
