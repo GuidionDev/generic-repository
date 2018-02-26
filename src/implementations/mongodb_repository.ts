@@ -1,5 +1,6 @@
 import Repository from '../repository';
 import { Db, Collection, CommonOptions, ObjectId } from 'mongodb';
+import { NotFoundError } from '../errors/not_found_error';
 
 export default class MongoDBRepository<T> implements Repository<T> {
   public Type: { new(...args: any[]): T; };
@@ -60,7 +61,7 @@ export default class MongoDBRepository<T> implements Repository<T> {
         if (doc) {
           return this.toInstance(doc);
         } else {
-          throw new Error('No results for query: ' + JSON.stringify(conditions));
+          throw new NotFoundError('No results for query: ' + JSON.stringify(conditions));
         }
       }).catch(this.reject));
   }

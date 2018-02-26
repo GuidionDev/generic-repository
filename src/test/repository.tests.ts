@@ -1,6 +1,7 @@
 import * as Chai from 'chai';
 import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
 import Repository from '../repository';
+import { NotFoundError } from '../errors/not_found_error';
 const expect = Chai.expect;
 
 export function tests(readyRepo: Repository<SomeObject>) {
@@ -36,8 +37,8 @@ export function tests(readyRepo: Repository<SomeObject>) {
       }).catch(done);
     });
     it('should not find one object based on wrong id', (done) => {
-      readyRepo.findById('598b189fb4593800112122af').then(done).catch((error: Error) => {
-        expect(error).to.be.instanceof(Error);
+      readyRepo.findById('598b189fb4593800112122af').then(done).catch((error: NotFoundError) => {
+        expect(error).to.be.instanceof(NotFoundError);
         done();
       });
     });
@@ -50,8 +51,8 @@ export function tests(readyRepo: Repository<SomeObject>) {
       }).catch(done);
     });
     it('should not find one object based on wrong conditions', (done) => {
-      readyRepo.findOne({ _id: 'idontexistyo' }).catch((error: Error) => {
-        expect(error).to.be.instanceof(Error);
+      readyRepo.findOne({ _id: 'idontexistyo' }).catch((error: NotFoundError) => {
+        expect(error).to.be.instanceof(NotFoundError);
         done();
       });
     });
