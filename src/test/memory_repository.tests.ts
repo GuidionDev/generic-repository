@@ -12,6 +12,7 @@ describe('MemoryRepository<SomeObject>', () => {
 
 describe('MemoryRepository<AnotherObject>', () => {
   const memoryRepository = new MemoryRepository(AnotherObject);
+
   describe('.findOne()', () => {
     it('should find one object based on object specific conditions', (done) => {
       memoryRepository.insert(new AnotherObject(anotherObjectWithoutIdFixture));
