@@ -13,7 +13,7 @@ export class MongoConnect {
       return this._instance || (this._instance = new this());
   }
 
-  public async connect(connectionString = undefined, database = undefined): Promise<Db> {
+  public async connect(connectionString: string = undefined, database: string = undefined): Promise<Db> {
     let dbUri = connectionString || process.env.DB_URI;
     let dbName = database || process.env.DB_NAME;
     if (process.env.NODE_ENV === 'test' && process.env.DB_URI_TEST) {
@@ -21,7 +21,12 @@ export class MongoConnect {
       dbUri = process.env.DB_URI_TEST;
       dbName = process.env.DB_NAME_TEST;
     }
-    console.info(this, 'Connecting to database..');
+    if (!connectionString) {
+      console.warn('No connectionString found! Make sure you either pass it to the mongo connect, or have it defined in your enviroment settings(DB_URI)');
+    } else if (!database) {
+      console.warn('No database specified! Make sure you either pass it to the mongo connect, or have it defined in your enviroment settings(DB_NAME)');
+    }
+    console.log(this, 'Connecting to database..');
     return this._connection = MongoClient.connect(dbUri).then((ready) => {
       console.log('Connected!');
       this._readyConnection = ready;
@@ -33,11 +38,6 @@ export class MongoConnect {
   }
   get db() {
     return this._db;
-  }
-
-  private closeConnectionAndProcess() {
-    this.gracefulExit();
-    process.exit();
   }
 
   public gracefulExit() {
