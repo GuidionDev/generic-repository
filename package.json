@@ -5,8 +5,11 @@
   "main": "dist/index",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "gulp",
-    "semantic-release": "semantic-release pre && npm publish --access=public && semantic-release post"
+    "build": "npm run tslint && npx rimraf dist && npx tsc && npm run copy",
+    "tslint": "tslint \"src/**.ts\"",
+    "copy": "copyfiles -u 1 src/test/mock/*.json dist/",
+    "test": "npm run build && nyc --reporter=text --reporter=html mocha ./dist/test/**.tests.js",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
@@ -24,28 +27,21 @@
   },
   "homepage": "https://github.com/GuidionDev/generic-repository#readme",
   "dependencies": {
-    "mongodb": "^3.0.2"
+    "mongodb": "^3.1.3"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "chai-as-promised": "^6.0.0",
-    "dotenv": "^5.0.0",
-    "gulp": "^3.9.1",
-    "gulp-clean": "^0.3.2",
-    "gulp-istanbul": "^1.1.1",
-    "gulp-mocha": "^3.0.1",
-    "gulp-nodemon": "^2.2.1",
-    "gulp-sourcemaps": "^2.6.0",
-    "gulp-tslint": "^8.0.0",
-    "gulp-typedoc": "^2.0.2",
-    "gulp-typescript": "^3.1.6",
-    "mocha": "^3.1.2",
-    "remap-istanbul": "^0.9.5",
-    "run-sequence": "^1.2.2",
-    "semantic-release": "^15.1.8",
-    "supertest": "^3.0.0",
+    "@types/mocha": "^5.2.5",
+    "@types/nconf": "0.0.37",
+    "@types/node": "^10.11.5",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "copyfiles": "^2.1.0",
+    "dotenv": "^6.0.0",
+    "mocha": "^5.2.0",
+    "nyc": "^13.0.1",
+    "semantic-release": "^15.10.0",
+    "supertest": "^3.3.0",
     "tslint": "^5.2.0",
-    "typescript": "^2.7.1",
-    "typings": "^2.1.1"
+    "typescript": "^2.7.1"
   }
 }
