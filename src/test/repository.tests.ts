@@ -161,12 +161,6 @@ export function tests(readyRepo: Repository<SomeObject>) {
         done();
       });
     });
-    it('should update entire object', (done) => {
-      readyRepo.update({ _id: objId }, { $set: { _id: objId.toString(), _name: 'newName' } }).then((updated: SomeObject) => {
-        expect(updated.name).to.equal('newName');
-        done();
-      }).catch(done);
-    });
     it('should update according to query', (done) => {
       readyRepo.update({ _id: objId }, { $set: { _name: 'bla' } }).then((updated: SomeObject) => {
         expect(updated.name).to.equal('bla');
