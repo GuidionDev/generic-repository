@@ -162,8 +162,7 @@ export function tests(readyRepo: Repository<SomeObject>) {
       });
     });
     it('should update entire object', (done) => {
-      const updatedObject = Object.assign(objectWithoutIdFixture, { _id: objId.toString(), _name: 'newName' });
-      readyRepo.update({ _id: objId }, updatedObject).then((updated: SomeObject) => {
+      readyRepo.update({ _id: objId }, { $set: { _id: objId.toString(), _name: 'newName' } }).then((updated: SomeObject) => {
         expect(updated.name).to.equal('newName');
         done();
       }).catch(done);
