@@ -1,5 +1,5 @@
 import * as Chai from 'chai';
-import { SomeObject, objectWithoutIdFixture} from './some_object.fixtures';
+import { SomeObject, objectWithoutIdFixture } from './some_object.fixtures';
 import Repository from '../repository';
 import { NotFoundError } from '../errors/not_found_error';
 const expect = Chai.expect;
@@ -27,7 +27,7 @@ export function tests(readyRepo: Repository<SomeObject>) {
       }).catch(done);
     });
     it('should find one object based on a new id', (done) => {
-      const insertWithId: any = { name: objectWithoutIdFixture.name, _id: '12345'};
+      const insertWithId: any = { name: objectWithoutIdFixture.name, _id: '12345' };
       readyRepo.insert(insertWithId).then((result) => {
         return readyRepo.findById(insertWithId._id).then((result) => {
           expect(result.id.toString()).to.equal('12345');
@@ -161,12 +161,6 @@ export function tests(readyRepo: Repository<SomeObject>) {
         done();
       });
     });
-    it('should update entirte object', (done) => {
-      readyRepo.update({ _id: objId }, {_id: objId.toString(), _name: 'newName'}).then((updated: SomeObject) => {
-        expect(updated.name).to.equal('newName');
-        done();
-      }).catch(done);
-    });
     it('should update according to query', (done) => {
       readyRepo.update({ _id: objId }, { $set: { _name: 'bla' } }).then((updated: SomeObject) => {
         expect(updated.name).to.equal('bla');
@@ -175,9 +169,9 @@ export function tests(readyRepo: Repository<SomeObject>) {
     });
     it('should update according to query with string id', (done) => {
       readyRepo.update({ _id: objId.toString() }, { $set: { _name: 'bla2' } }).then((updated: SomeObject) => {
-          expect(updated.name).to.equal('bla2');
-          done();
-        }).catch(done);
+        expect(updated.name).to.equal('bla2');
+        done();
+      }).catch(done);
     });
   });
   describe('.delete()', () => {
